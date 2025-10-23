@@ -16,7 +16,7 @@ import {
   ChevronRight,
   ArrowLeft
 } from "lucide-react"
-import Flags from "country-flag-icons/react/3x2"
+import * as Flags from "country-flag-icons/react/3x2"
 import { useState, useRef } from "react"
 
 const experiences = [
@@ -110,17 +110,42 @@ export default function Experience() {
     offset: ["start end", "end start"]
   })
   
-  // Transform scroll progress to unstacking effect
-  const unstackProgress = useTransform(scrollYProgress, [0, 0.3, 1], [0, 1, 1])
-  const cardSpread = useTransform(unstackProgress, [0, 1], [0, 80])
-  const cardRotation = useTransform(unstackProgress, [0, 1], [0, 15])
+  // Transform scroll progress to grid unstacking effect
+  // Cards fully unstack by 20% of section scroll
+  const unstackProgress = useTransform(scrollYProgress, [0.05, 0.2], [0, 1])
+  
+  // Define grid positions (3 columns × 2 rows)
+  const gridPositions = [
+    { row: 0, col: 0 },
+    { row: 0, col: 1 },
+    { row: 0, col: 2 },
+    { row: 1, col: 0 },
+    { row: 1, col: 1 },
+    { row: 1, col: 2 },
+  ]
+  
+  const cardWidth = 280  // Smaller card width
+  const cardHeight = 320 // Smaller card height
+  const gap = 24 // Gap between cards
+  
+  // Calculate the total grid width and offset to center it
+  const totalGridWidth = (cardWidth * 3) + (gap * 2)
   
   // Create individual card transforms at the top level
-  const cardTransforms = experiences.map((_, i) => ({
-    x: useTransform(cardSpread, (value) => value * i),
-    y: useTransform(cardSpread, (value) => -value * i * 0.5),
-    rotate: useTransform(cardRotation, (value) => value * i * 0.1),
-  }))
+  const cardTransforms = experiences.map((_, i) => {
+    const gridPos = gridPositions[i]
+    // Start from center, so we need to offset by half the grid width minus half a card
+    const startOffsetX = (totalGridWidth / 2) - (cardWidth / 2)
+    const targetX = (gridPos.col * (cardWidth + gap)) - startOffsetX
+    const targetY = gridPos.row * (cardHeight + gap)
+    
+    return {
+      x: useTransform(unstackProgress, [0, 1], [0, targetX]),
+      y: useTransform(unstackProgress, [0, 1], [0, targetY]),
+      rotate: useTransform(unstackProgress, [0, 1], [0, 0]),
+      scale: useTransform(unstackProgress, [0, 1], [1, 0.85]),
+    }
+  })
 
   return (
     <section ref={sectionRef} id="experience" className="py-24 bg-background">
@@ -140,15 +165,40 @@ export default function Experience() {
             </p>
           </motion.div>
 
-          {/* Right Side - Card Game Stack (More space) */}
+          {/* Right Side - Card Grid (More space) */}
           <div className="relative md:col-span-2">
             <div 
-              className="relative h-[600px] w-full max-w-4xl mx-auto bg-gradient-to-br from-gray-50/50 to-gray-100/50 rounded-2xl p-6"
+              className="relative w-full max-w-5xl mx-auto bg-gradient-to-br from-gray-50/50 to-gray-100/50 rounded-2xl p-8"
+              style={{ 
+                minHeight: `${(cardHeight * 2) + (gap * 3) + 80}px`,
+              }}
             >
-              {/* Scroll-based card unstacking */}
-              <div className="relative h-80 w-80 mx-auto">
+              {/* Grid placeholder spaces - centered */}
+              <div className="absolute top-8 left-1/2 grid grid-cols-3" style={{ 
+                gridTemplateRows: `repeat(2, ${cardHeight}px)`,
+                gridTemplateColumns: `repeat(3, ${cardWidth}px)`,
+                gap: `${gap}px`,
+                transform: `translateX(-${totalGridWidth / 2}px)`,
+              }}>
+                {gridPositions.map((_, i) => (
+                  <motion.div
+                    key={`placeholder-${i}`}
+                    className="border-2 border-dashed border-gray-300/50 rounded-xl bg-white/30"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    transition={{ delay: i * 0.1 }}
+                  />
+                ))}
+              </div>
+
+              {/* Scroll-based card unstacking to grid */}
+              <div className="absolute top-8 left-1/2" style={{ 
+                width: `${cardWidth}px`,
+                height: `${(cardHeight * 2) + gap}px`,
+                transform: `translateX(-${cardWidth / 2}px)`,
+              }}>
                 {experiences.map((exp, i) => {
-                  const FlagComponent = exp.country !== "GLOBAL" ? Flags[exp.country] : null
+                  const FlagComponent = exp.country !== "GLOBAL" ? (Flags as any)[exp.country] : null
                   const isHovered = hoveredIndex === i
                   const isFlipped = flippedCard === i
                   const transforms = cardTransforms[i]
@@ -156,19 +206,23 @@ export default function Experience() {
                   return (
                     <motion.div
                       key={`stacked-${i}`}
-                      className="absolute inset-0 cursor-pointer"
+                      className="absolute cursor-pointer"
                       style={{ 
-                        zIndex: experiences.length - i,
                         x: transforms.x,
                         y: transforms.y,
                         rotate: transforms.rotate,
+                        scale: transforms.scale,
+                        width: `${cardWidth}px`,
+                        height: `${cardHeight}px`,
+                        zIndex: experiences.length - i,
                       }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
                       transition={{ delay: i * 0.1, duration: 0.6 }}
-                      animate={{
-                        scale: isHovered ? 1.05 : 1,
-                        y: isHovered ? -10 : 0,
+                      whileHover={{
+                        scale: 1.05,
+                        zIndex: 100,
+                        transition: { duration: 0.2 }
                       }}
                       onHoverStart={() => setHoveredIndex(i)}
                       onHoverEnd={() => setHoveredIndex(null)}
@@ -184,9 +238,9 @@ export default function Experience() {
                         >
                           {/* Front of card - Card Game Style */}
                           <Card className={`absolute inset-0 w-full h-full bg-white border-2 border-gray-200 hover:border-primary/40 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 ${isFlipped ? 'opacity-0' : 'opacity-100'} rounded-xl ${isHovered ? 'shadow-2xl' : 'shadow-lg'} overflow-hidden`}>
-                            <div className="relative p-6 h-full flex flex-col justify-center bg-white">
+                            <div className="relative p-4 h-full flex flex-col justify-center bg-white">
                               {/* Card Corner Design */}
-                              <div className="absolute top-2 left-2 w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                              <div className="absolute top-2 left-2 w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center">
                                 <span className="text-xs font-bold text-primary">{i + 1}</span>
                               </div>
                               
@@ -200,40 +254,40 @@ export default function Experience() {
                                   stiffness: 200,
                                   damping: 15
                                 }}
-                                className="w-16 h-16 mx-auto mb-4 rounded-xl bg-white shadow-lg flex items-center justify-center overflow-hidden border-2 border-gray-100"
+                                className="w-12 h-12 mx-auto mb-3 rounded-lg bg-white shadow-lg flex items-center justify-center overflow-hidden border-2 border-gray-100"
                               >
                                 <img
                                   src={exp.logo}
                                   alt={`${exp.company} logo`}
-                                  className="w-12 h-12 object-contain"
+                                  className="w-9 h-9 object-contain"
                                 />
                               </motion.div>
 
                               {/* Company Name */}
-                              <h3 className="text-xl font-bold text-center mb-2 text-gray-800 group-hover:text-primary transition-colors">
+                              <h3 className="text-base font-bold text-center mb-2 text-gray-800 group-hover:text-primary transition-colors">
                                 {exp.company}
                               </h3>
 
                               {/* Country Flag and Duration */}
-                              <div className="flex items-center justify-center space-x-2 mb-4">
+                              <div className="flex items-center justify-center space-x-1.5 mb-3">
                                 {FlagComponent ? (
                                   <FlagComponent
                                     title={exp.location}
-                                    className="w-6 h-5 rounded-sm shadow-sm"
+                                    className="w-5 h-4 rounded-sm shadow-sm"
                                   />
                                 ) : (
-                                  <Globe className="w-5 h-5 text-muted-foreground" />
+                                  <Globe className="w-4 h-4 text-muted-foreground" />
                                 )}
-                                <span className="text-sm text-muted-foreground font-medium">
+                                <span className="text-xs text-muted-foreground font-medium">
                                   {exp.location.split(',')[1]?.trim() || exp.location}
                                 </span>
                               </div>
 
                               {/* Duration Badge */}
-                              <div className="text-center mb-4">
+                              <div className="text-center mb-3">
                                 <Badge 
                                   variant="secondary" 
-                                  className="text-sm bg-primary/10 text-primary border-primary/20"
+                                  className="text-xs bg-primary/10 text-primary border-primary/20"
                                 >
                                   {exp.duration}
                                 </Badge>
@@ -241,76 +295,76 @@ export default function Experience() {
 
                               {/* See More Button */}
                               <motion.div
-                                className="flex items-center justify-center space-x-2 text-primary hover:text-primary/80 transition-colors"
+                                className="flex items-center justify-center space-x-1 text-primary hover:text-primary/80 transition-colors"
                                 whileHover={{ scale: 1.05 }}
                               >
-                                <span className="text-sm font-medium">See more of this project</span>
-                                <ChevronRight className="w-4 h-4" />
+                                <span className="text-xs font-medium">See more</span>
+                                <ChevronRight className="w-3 h-3" />
                               </motion.div>
                             </div>
                           </Card>
 
                           {/* Back of card - Card Game Style */}
                           <Card className={`absolute inset-0 w-full h-full bg-white border-2 border-primary/40 shadow-2xl shadow-primary/10 ${isFlipped ? 'opacity-100' : 'opacity-0'} rounded-xl overflow-hidden`} style={{ transform: 'rotateY(180deg)' }}>
-                            <div className="relative p-6 h-full flex flex-col bg-white">
+                            <div className="relative p-3 h-full flex flex-col bg-white">
                               {/* Back button */}
                               <motion.button
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   setFlippedCard(null)
                                 }}
-                                className="absolute top-4 left-4 p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                                className="absolute top-2 left-2 p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                               >
-                                <ArrowLeft className="w-4 h-4 text-primary" />
+                                <ArrowLeft className="w-3 h-3 text-primary" />
                               </motion.button>
 
                               {/* Company Logo */}
-                              <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-white shadow-lg flex items-center justify-center overflow-hidden border-2 border-gray-100">
+                              <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-white shadow-lg flex items-center justify-center overflow-hidden border-2 border-gray-100">
                                 <img
                                   src={exp.logo}
                                   alt={`${exp.company} logo`}
-                                  className="w-10 h-10 object-contain"
+                                  className="w-8 h-8 object-contain"
                                 />
                               </div>
 
                               {/* Company Info */}
-                              <div className="text-center mb-4">
-                                <h3 className="text-lg font-bold mb-1 text-gray-800">{exp.company}</h3>
-                                <p className="text-sm text-muted-foreground">{exp.role}</p>
-                                <div className="flex items-center justify-center space-x-2 mt-2">
+                              <div className="text-center mb-2">
+                                <h3 className="text-sm font-bold mb-0.5 text-gray-800">{exp.company}</h3>
+                                <p className="text-xs text-muted-foreground">{exp.role}</p>
+                                <div className="flex items-center justify-center space-x-1.5 mt-1">
                                   {FlagComponent ? (
                                     <FlagComponent
                                       title={exp.location}
-                                      className="w-4 h-3 rounded-sm shadow-sm"
+                                      className="w-3 h-2.5 rounded-sm shadow-sm"
                                     />
                                   ) : (
-                                    <Globe className="w-4 h-4 text-muted-foreground" />
+                                    <Globe className="w-3 h-3 text-muted-foreground" />
                                   )}
                                   <span className="text-xs text-muted-foreground">{exp.location}</span>
                                 </div>
                               </div>
 
                               {/* Description */}
-                              <p className="text-sm text-muted-foreground mb-4 leading-relaxed text-center flex-1">
+                              <p className="text-xs text-muted-foreground mb-2 leading-relaxed text-center flex-1 overflow-y-auto">
                                 {exp.description}
                               </p>
 
                               {/* Technologies */}
-                              <div className="flex flex-wrap gap-1.5 justify-center">
-                                {exp.technologies.slice(0, 6).map((tech, techIndex) => (
+                              <div className="flex flex-wrap gap-1 justify-center">
+                                {exp.technologies.slice(0, 5).map((tech, techIndex) => (
                                   <Badge
                                     key={techIndex}
                                     variant="outline"
-                                    className="text-xs px-2 py-1 bg-background/50 border-border/50"
+                                    className="text-xs px-1.5 py-0.5 bg-background/50 border-border/50"
                                   >
                                     {tech}
                                   </Badge>
                                 ))}
-                                {exp.technologies.length > 6 && (
-                                  <Badge variant="outline" className="text-xs px-2 py-1">
-                                    +{exp.technologies.length - 6}
+                                {exp.technologies.length > 5 && (
+                                  <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                                    +{exp.technologies.length - 5}
                                   </Badge>
                                 )}
                               </div>
