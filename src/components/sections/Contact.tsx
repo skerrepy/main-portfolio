@@ -6,27 +6,70 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useState } from "react"
-import { Mail, Phone, MapPin, Send } from "lucide-react"
+import { Mail, Phone, MapPin, Send, Loader2 } from "lucide-react"
+import { z } from "zod"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+
+// Zod validation schema
+const contactSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  phone: z.string().min(10, "Please enter a valid phone number").optional().or(z.literal("")),
+  subject: z.string().min(5, "Subject must be at least 5 characters"),
+  message: z.string().min(10, "Message must be at least 10 characters"),
+})
+
+type ContactFormData = z.infer<typeof contactSchema>
 
 export default function Contact() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+
+  const form = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      subject: "",
+      message: "",
+    },
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Form submitted:", formData)
-    // Here you would typically send the data to your backend or email service
-    alert("Thank you for your message! I'll get back to you soon.")
-    setFormData({ name: "", email: "", subject: "", message: "" })
+  const onSubmit = async (data: ContactFormData) => {
+    setIsSubmitting(true)
+    setSubmitStatus('idle')
+    
+    try {
+      // Send email using Resend
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+      
+      if (response.ok) {
+        setSubmitStatus('success')
+        form.reset()
+      } else {
+        setSubmitStatus('error')
+      }
+    } catch (error) {
+      setSubmitStatus('error')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const itemVariants = {
@@ -39,12 +82,6 @@ export default function Contact() {
   }
 
   const contactInfo = [
-    {
-      icon: Mail,
-      label: "Email",
-      value: "omarhanaficontact@gmail.com",
-      href: "mailto:omarhanaficontact@gmail.com",
-    },
     {
       icon: Phone,
       label: "Phone",
@@ -126,95 +163,184 @@ export default function Contact() {
           {/* Right Side - Contact Form */}
           <motion.div variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <Card className="p-8 md:p-12 bg-gradient-to-br from-secondary/20 to-accent/20 border-secondary/30 backdrop-blur-sm">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  viewport={{ once: true }}
-                >
-                  <label className="block text-sm font-medium mb-2">Name *</label>
-                  <Input
-                    type="text"
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <FormField
+                    control={form.control}
                     name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Your full name"
-                    className="bg-background/50 border-border/50 focus:border-primary transition-all duration-300 ease-out"
-                    required
+                    render={({ field }) => (
+                      <FormItem>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4 }}
+                          viewport={{ once: true }}
+                        >
+                          <FormLabel>Name *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Your full name"
+                              className="bg-background/50 border-border/50 focus:border-primary transition-all duration-300 ease-out"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </motion.div>
+                      </FormItem>
+                    )}
                   />
-                </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                  viewport={{ once: true }}
-                >
-                  <label className="block text-sm font-medium mb-2">Email *</label>
-                  <Input
-                    type="email"
+                  <FormField
+                    control={form.control}
                     name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="your@email.com"
-                    className="bg-background/50 border-border/50 focus:border-primary transition-all duration-300 ease-out"
-                    required
+                    render={({ field }) => (
+                      <FormItem>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: 0.1 }}
+                          viewport={{ once: true }}
+                        >
+                          <FormLabel>Email *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="your@email.com"
+                              className="bg-background/50 border-border/50 focus:border-primary transition-all duration-300 ease-out"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </motion.div>
+                      </FormItem>
+                    )}
                   />
-                </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                  viewport={{ once: true }}
-                >
-                  <label className="block text-sm font-medium mb-2">Subject *</label>
-                  <Input
-                    type="text"
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: 0.2 }}
+                          viewport={{ once: true }}
+                        >
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="tel"
+                              placeholder="Your phone number (optional)"
+                              className="bg-background/50 border-border/50 focus:border-primary transition-all duration-300 ease-out"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </motion.div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    placeholder="Project brief or inquiry"
-                    className="bg-background/50 border-border/50 focus:border-primary transition-all duration-300 ease-out"
-                    required
+                    render={({ field }) => (
+                      <FormItem>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: 0.3 }}
+                          viewport={{ once: true }}
+                        >
+                          <FormLabel>Subject *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Project brief or inquiry"
+                              className="bg-background/50 border-border/50 focus:border-primary transition-all duration-300 ease-out"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </motion.div>
+                      </FormItem>
+                    )}
                   />
-                </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
-                  viewport={{ once: true }}
-                >
-                  <label className="block text-sm font-medium mb-2">Message *</label>
-                  <Textarea
+                  <FormField
+                    control={form.control}
                     name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    placeholder="Tell me about your project, timeline, and any specific requirements..."
-                    className="bg-background/50 border-border/50 focus:border-primary transition-all duration-300 ease-out min-h-32 resize-none"
-                    required
+                    render={({ field }) => (
+                      <FormItem>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: 0.4 }}
+                          viewport={{ once: true }}
+                        >
+                          <FormLabel>Message *</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Tell me about your project, timeline, and any specific requirements..."
+                              className="bg-background/50 border-border/50 focus:border-primary transition-all duration-300 ease-out min-h-32 resize-none"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </motion.div>
+                      </FormItem>
+                    )}
                   />
-                </motion.div>
 
-                <motion.div 
-                  whileHover={{ scale: 1.02 }} 
-                  whileTap={{ scale: 0.98 }}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.4 }}
-                  viewport={{ once: true }}
-                >
-                  <Button
-                    type="submit"
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full py-6 text-base font-semibold transition-all duration-300 ease-out"
+                  {/* Status Messages */}
+                  {submitStatus === 'success' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm"
+                    >
+                      ✅ Thank you for your message! I'll get back to you within 24 hours.
+                    </motion.div>
+                  )}
+                  
+                  {submitStatus === 'error' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm"
+                    >
+                      ❌ Something went wrong. Please try again or contact me directly.
+                    </motion.div>
+                  )}
+
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }} 
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.5 }}
+                    viewport={{ once: true }}
                   >
-                    <Send className="w-5 h-5 mr-2" />
-                    Send Message
-                  </Button>
-                </motion.div>
-              </form>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full py-6 text-base font-semibold transition-all duration-300 ease-out disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-5 h-5 mr-2" />
+                          Send Message
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
+                </form>
+              </Form>
             </Card>
           </motion.div>
         </div>

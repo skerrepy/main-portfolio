@@ -119,11 +119,11 @@ export default function Services() {
               <div className="text-sm text-muted-foreground">Years Experience</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">20+</div>
+              <div className="text-3xl font-bold text-primary mb-2">6+</div>
               <div className="text-sm text-muted-foreground">Projects Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">15+</div>
+              <div className="text-3xl font-bold text-primary mb-2">6+</div>
               <div className="text-sm text-muted-foreground">Happy Clients</div>
             </div>
             <div className="text-center">

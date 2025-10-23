@@ -10,7 +10,7 @@ export default function Portfolio() {
     {
       title: "Wastewize ERP System",
       description: "Comprehensive in-house ERP system for waste management operations, streamlining business processes and improving operational efficiency.",
-      image: "/api/placeholder/600/400",
+      image: "/projects-screenshots/wastewize.png",
       tags: ["ERP", "Full-Stack", "Next.js", "AWS", "PostgreSQL"],
       year: "2025",
       featured: true,
@@ -22,7 +22,7 @@ export default function Portfolio() {
     {
       title: "Vaymees SaaS Platform",
       description: "Complete SaaS platform that helps restaurants and cafés digitize their operations through QR-code menus, analytics dashboards, and comprehensive management tools.",
-      image: "/api/placeholder/600/400",
+      image: "/projects-screenshots/vaymees.png",
       tags: ["SaaS", "QR Menus", "Analytics", "Restaurant Tech"],
       year: "2024",
       featured: true,
@@ -34,7 +34,7 @@ export default function Portfolio() {
     {
       title: "Mindosystem Loyalty Platform",
       description: "Complete loyalty platform with web app, backend services, and mobile applications for businesses to increase customer retention through subscriptions and rewards.",
-      image: "/api/placeholder/400/300",
+      image: "/projects-screenshots/mindosystem.png",
       tags: ["Mobile App", "Web App", "Backend", "Team Leadership"],
       year: "2025",
       status: "Completed",
@@ -46,7 +46,7 @@ export default function Portfolio() {
     {
       title: "Formazone EdTech Platform",
       description: "Educational technology platform featuring course management, interactive quizzes, and comprehensive back-office system for bootcamp operations.",
-      image: "/api/placeholder/400/300",
+      image: "/projects-screenshots/formazone.png",
       tags: ["EdTech", "Learning Management", "Back-Office"],
       year: "2024",
       status: "Completed",
@@ -57,7 +57,7 @@ export default function Portfolio() {
     {
       title: "Bookclick ERP Automation",
       description: "ERP system that automates manual tasks for moving, cleaning, and construction companies, significantly improving operational efficiency and reducing human error.",
-      image: "/api/placeholder/400/300",
+      image: "/projects-screenshots/bookclick.png",
       tags: ["ERP", "Automation", "Business Process"],
       year: "2023-2024",
       status: "Completed",
@@ -67,7 +67,7 @@ export default function Portfolio() {
     {
       title: "iSpeakTo Language Platform",
       description: "Interactive language learning platform with comprehensive design system. Contributed to product strategy and helped achieve $4M company valuation. Now rebranded as iSpeakTo.",
-      image: "/api/placeholder/400/300",
+      image: "/projects-screenshots/ispeakto.png",
       tags: ["Language Learning", "Education", "Design System", "AI"],
       year: "2023",
       status: "Completed",
@@ -133,36 +133,34 @@ export default function Portfolio() {
           >
             <Card 
               className="overflow-hidden bg-card border border-border/50 hover:border-primary/30 cursor-pointer group h-full"
-              onClick={() => projects[1].link && window.open(projects[1].link, '_blank')}
+              onClick={() => projects[2].link && window.open(projects[2].link, '_blank')}
             >
-              <div className="relative h-96 md:h-[500px] overflow-hidden bg-muted rounded-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-indigo-600/20 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">🍽️</div>
-                    <p className="text-lg font-semibold">Vaymees SaaS Platform</p>
-                    <p className="text-sm text-muted-foreground">Restaurant Digitalization</p>
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative h-96 md:h-[500px] overflow-hidden bg-muted">
+                <img
+                  src={projects[2].image}
+                  alt={projects[2].title}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <ExternalLink className="w-6 h-6 text-white" />
+                  <ExternalLink className="w-6 h-6 text-white drop-shadow-lg" />
                 </div>
               </div>
               <div className="p-8">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <p className="text-muted-foreground text-sm font-semibold mb-2 uppercase tracking-wide">
-                      {projects[1].year} • {projects[1].status}
+                      {projects[2].year} • {projects[2].status}
                     </p>
-                    <h3 className="text-3xl font-bold">{projects[1].title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{projects[1].client}</p>
+                    <h3 className="text-3xl font-bold">{projects[2].title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{projects[2].client}</p>
                   </div>
                 </div>
                 <p className="text-muted-foreground mb-6 text-base leading-relaxed">
-                  {projects[1].description}
+                  {projects[2].description}
                 </p>
                 <div className="flex flex-wrap gap-3 mb-6">
-                  {projects[1].tags.map((tag, j) => (
+                  {projects[2].tags.map((tag, j) => (
                     <motion.span
                       key={j}
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -175,7 +173,7 @@ export default function Portfolio() {
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {projects[1].technologies.map((tech, j) => (
+                  {projects[2].technologies.map((tech, j) => (
                     <span
                       key={j}
                       className="px-3 py-1 bg-muted text-muted-foreground text-xs rounded-full"
@@ -197,7 +195,7 @@ export default function Portfolio() {
           viewport={{ once: true }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {projects.filter((_, i) => i !== 1).map((project, i) => (
+          {projects.filter((_, i) => i !== 2).map((project, i) => (
             <motion.div
               key={i}
               variants={cardVariants}
@@ -209,22 +207,15 @@ export default function Portfolio() {
                 onClick={() => project.link && window.open(project.link, '_blank')}
               >
                 <div className={`relative overflow-hidden bg-muted ${i === 0 ? "h-64" : "h-48"}`}>
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">
-                        {project.title.includes("Wastewize") ? "🏢" : 
-                         project.title.includes("Mindosystem") ? "📱" : 
-                         project.title.includes("Formazone") ? "🎓" : 
-                         project.title.includes("Bookclick") ? "📦" : 
-                         project.title.includes("iSpeakTo") ? "🗣️" : "💼"}
-                      </div>
-                      <p className="text-sm font-semibold">{project.title}</p>
-                    </div>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <img
+                    src={project.image}
+                    alt={project.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
                   {project.link && (
                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <ExternalLink className="w-6 h-6 text-white" />
+                      <ExternalLink className="w-6 h-6 text-white drop-shadow-lg" />
                     </div>
                   )}
                 </div>

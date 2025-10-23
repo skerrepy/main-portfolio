@@ -17,7 +17,7 @@ import {
   ArrowLeft
 } from "lucide-react"
 import * as Flags from "country-flag-icons/react/3x2"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 
 const experiences = [
   {
@@ -104,6 +104,17 @@ export default function Experience() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [flippedCard, setFlippedCard] = useState<number | null>(null)
   const sectionRef = useRef<HTMLDivElement>(null)
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
   
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -114,7 +125,7 @@ export default function Experience() {
   // Cards fully unstack by 20% of section scroll
   const unstackProgress = useTransform(scrollYProgress, [0.05, 0.2], [0, 1])
   
-  // Define grid positions (3 columns × 2 rows)
+  // Define grid positions (3 columns × 2 rows for desktop, 2 cols for tablet)
   const gridPositions = [
     { row: 0, col: 0 },
     { row: 0, col: 1 },
@@ -147,26 +158,158 @@ export default function Experience() {
     }
   })
 
+  // Mobile Card Component
+  const MobileCard = ({ exp, i }: { exp: typeof experiences[0], i: number }) => {
+    const FlagComponent = exp.country !== "GLOBAL" ? (Flags as any)[exp.country] : null
+    const isFlipped = flippedCard === i
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ delay: i * 0.1, duration: 0.6 }}
+        viewport={{ once: true }}
+        className="cursor-pointer"
+        onClick={() => setFlippedCard(isFlipped ? null : i)}
+      >
+        <motion.div
+          className="relative w-full h-80"
+          animate={{ rotateY: isFlipped ? 180 : 0 }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+          style={{ transformStyle: "preserve-3d" }}
+        >
+          {/* Front of card */}
+          <Card className={`absolute inset-0 w-full h-full bg-white border-2 border-gray-200 ${isFlipped ? 'opacity-0' : 'opacity-100'} rounded-xl shadow-lg overflow-hidden`}>
+            <div className="relative p-6 h-full flex flex-col justify-center bg-white">
+              <div className="absolute top-3 left-3 w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold text-primary">{i + 1}</span>
+              </div>
+              
+              <motion.div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-white shadow-lg flex items-center justify-center overflow-hidden border-2 border-gray-100">
+                <img src={exp.logo} alt={`${exp.company} logo`} className="w-12 h-12 object-contain" />
+              </motion.div>
+
+              <h3 className="text-xl font-bold text-center mb-2 text-gray-800">{exp.company}</h3>
+
+              <div className="flex items-center justify-center space-x-2 mb-4">
+                {FlagComponent ? (
+                  <FlagComponent title={exp.location} className="w-6 h-5 rounded-sm shadow-sm" />
+                ) : (
+                  <Globe className="w-5 h-5 text-muted-foreground" />
+                )}
+                <span className="text-sm text-muted-foreground font-medium">
+                  {exp.location.split(',')[1]?.trim() || exp.location}
+                </span>
+              </div>
+
+              <div className="text-center mb-4">
+                <Badge variant="secondary" className="text-sm bg-primary/10 text-primary border-primary/20">
+                  {exp.duration}
+                </Badge>
+              </div>
+
+              <motion.div className="flex items-center justify-center space-x-2 text-primary" whileHover={{ scale: 1.05 }}>
+                <span className="text-sm font-medium">See more</span>
+                <ChevronRight className="w-4 h-4" />
+              </motion.div>
+            </div>
+          </Card>
+
+          {/* Back of card */}
+          <Card className={`absolute inset-0 w-full h-full bg-white border-2 border-primary/40 shadow-2xl ${isFlipped ? 'opacity-100' : 'opacity-0'} rounded-xl overflow-hidden`} style={{ transform: 'rotateY(180deg)' }}>
+            <div className="relative p-4 h-full flex flex-col bg-white">
+              <motion.button
+                onClick={(e) => { e.stopPropagation(); setFlippedCard(null); }}
+                className="absolute top-2 left-2 p-2 rounded-full bg-primary/10 hover:bg-primary/20"
+                whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+              >
+                <ArrowLeft className="w-4 h-4 text-primary" />
+              </motion.button>
+
+              <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-white shadow-lg flex items-center justify-center overflow-hidden border-2 border-gray-100">
+                <img src={exp.logo} alt={`${exp.company} logo`} className="w-10 h-10 object-contain" />
+              </div>
+
+              <div className="text-center mb-3">
+                <h3 className="text-base font-bold mb-1 text-gray-800">{exp.company}</h3>
+                <p className="text-sm text-muted-foreground">{exp.role}</p>
+                <div className="flex items-center justify-center space-x-2 mt-2">
+                  {FlagComponent ? (
+                    <FlagComponent title={exp.location} className="w-4 h-3 rounded-sm shadow-sm" />
+                  ) : (
+                    <Globe className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  <span className="text-xs text-muted-foreground">{exp.location}</span>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground mb-3 leading-relaxed text-center flex-1 overflow-y-auto">
+                {exp.description}
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 justify-center">
+                {exp.technologies.slice(0, 6).map((tech, techIndex) => (
+                  <Badge key={techIndex} variant="outline" className="text-xs px-2 py-1 bg-background/50 border-border/50">
+                    {tech}
+                  </Badge>
+                ))}
+                {exp.technologies.length > 6 && (
+                  <Badge variant="outline" className="text-xs px-2 py-1">+{exp.technologies.length - 6}</Badge>
+                )}
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
   return (
     <section ref={sectionRef} id="experience" className="py-24 bg-background">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-3 gap-8 items-start">
-          {/* Left Side - Heading (Reduced width) */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="md:col-span-1"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Professional Journey</h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              A track record of delivering exceptional digital solutions across various industries, from startups to enterprise clients.
-            </p>
-          </motion.div>
+        {/* Mobile View */}
+        {isMobile && (
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Professional Journey</h2>
+              <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto">
+                A track record of delivering exceptional digital solutions across various industries, from startups to enterprise clients.
+              </p>
+            </motion.div>
 
-          {/* Right Side - Card Grid (More space) */}
-          <div className="relative md:col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {experiences.map((exp, i) => (
+                <MobileCard key={i} exp={exp} i={i} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Desktop View */}
+        {!isMobile && (
+          <div className="grid md:grid-cols-3 gap-8 items-start">
+            {/* Left Side - Heading (Reduced width) */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="md:col-span-1"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Professional Journey</h2>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                A track record of delivering exceptional digital solutions across various industries, from startups to enterprise clients.
+              </p>
+            </motion.div>
+
+            {/* Right Side - Card Grid (More space) */}
+            <div className="relative md:col-span-2">
             <div 
               className="relative w-full max-w-5xl mx-auto bg-gradient-to-br from-gray-50/50 to-gray-100/50 rounded-2xl p-8"
               style={{ 
@@ -377,7 +520,8 @@ export default function Experience() {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+        )}
       </div>
     </section>
   )

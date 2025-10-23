@@ -34,17 +34,31 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://omarhanafi.dev",
     title: "Omar Hanafi | Full-Stack Developer & Product Manager",
-    description: "Experienced Full-Stack Developer and Product Manager specializing in React, Node.js, mobile development, and UI/UX design.",
+    description: "Experienced Full-Stack Developer and Product Manager specializing in React, Node.js, mobile development, and UI/UX design. Available for freelance projects and consulting.",
     siteName: "Omar Hanafi Portfolio",
+    images: [
+      {
+        url: "/my-picture.png",
+        width: 1200,
+        height: 630,
+        alt: "Omar Hanafi - Full-Stack Developer & Product Manager",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Omar Hanafi | Full-Stack Developer & Product Manager",
-    description: "Experienced Full-Stack Developer and Product Manager specializing in React, Node.js, mobile development, and UI/UX design.",
+    description: "Experienced Full-Stack Developer and Product Manager specializing in React, Node.js, mobile development, and UI/UX design. Available for freelance projects and consulting.",
+    images: ["/my-picture.png"],
+    creator: "@omarhanafi",
   },
   robots: {
     index: true,
     follow: true,
+  },
+  metadataBase: new URL("https://omarhanafi.dev"),
+  alternates: {
+    canonical: "/",
   },
 };
 

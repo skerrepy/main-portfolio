@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Github, Linkedin, Mail, ArrowUp } from "lucide-react"
+import { Github, Linkedin, ArrowUp } from "lucide-react"
 
 export default function Footer() {
   const socialLinks = [
@@ -16,12 +16,6 @@ export default function Footer() {
       href: "https://www.linkedin.com/in/omar-hanafi-654489100/", 
       label: "LinkedIn",
       color: "hover:text-blue-600"
-    },
-    { 
-      icon: Mail, 
-      href: "mailto:omarhanaficontact@gmail.com", 
-      label: "Email",
-      color: "hover:text-red-500"
     },
   ]
 
@@ -129,15 +123,6 @@ export default function Footer() {
           <motion.div variants={itemVariants}>
             <h3 className="text-lg font-bold mb-4">Get In Touch</h3>
             <div className="space-y-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <a 
-                  href="mailto:omarhanaficontact@gmail.com"
-                  className="text-primary hover:underline"
-                >
-                  omarhanaficontact@gmail.com
-                </a>
-              </div>
               <div>
                 <p className="text-sm text-muted-foreground">Location</p>
                 <p className="text-foreground">Tunisia</p>

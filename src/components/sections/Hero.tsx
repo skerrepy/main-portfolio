@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Linkedin, Github, Mail, Code, Smartphone, Palette } from "lucide-react"
+import { Linkedin, Github, Code, Smartphone, Palette } from "lucide-react"
 
 export default function Hero() {
   const containerVariants = {
@@ -28,7 +28,6 @@ export default function Hero() {
   const socialLinks = [
     { icon: Github, label: "GitHub", href: "https://github.com/skerrepy", color: "text-gray-800 dark:text-gray-200" },
     { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/omar-hanafi-654489100/", color: "text-blue-600" },
-    { icon: Mail, label: "Email", href: "mailto:omarhanaficontact@gmail.com", color: "text-red-500" },
   ]
 
   const services = [
@@ -38,7 +37,7 @@ export default function Hero() {
   ]
 
   return (
-    <section id="about" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 pb-20">
+    <section id="about" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-4 pb-20">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-blue-600/5 pointer-events-none" />
 
       <motion.div
@@ -187,7 +186,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.7 }}
-            className="space-y-3"
+            className="space-y-3 flex justify-between"
           >
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">5+</div>
