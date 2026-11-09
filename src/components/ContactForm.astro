@@ -1,5 +1,5 @@
 ---
-import type { Locale } from '../content/copy';
+import { languageNames, locales, type Locale } from '../content/copy';
 import { contactCopy } from '../content/contact';
 
 interface Props { locale: Locale }
@@ -10,11 +10,36 @@ const t = contactCopy[locale];
 <form action="/api/contact/" method="post" data-contact data-sending={t.sending}
   data-sent={t.sent} data-invalid={t.invalid} data-failed={t.failed}>
   <input type="hidden" name="locale" value={locale} />
-  <label>{t.name}<input name="name" autocomplete="name" minlength="2" maxlength="100" required /></label>
-  <label>{t.email}<input type="email" name="email" autocomplete="email" maxlength="254" required /></label>
-  <label>{t.phone}<input type="tel" name="phone" autocomplete="tel" maxlength="50" /></label>
-  <label>{t.subject}<input name="subject" minlength="5" maxlength="150" required /></label>
-  <label class="full">{t.message}<textarea name="message" rows="5" minlength="10" maxlength="3000" required></textarea></label>
+  <div>
+    <label>{t.name}<input name="name" autocomplete="name" minlength="2" maxlength="100" required aria-describedby="contact-name-error" /></label>
+    <p class="field-error" id="contact-name-error"></p>
+  </div>
+  <div>
+    <label>{t.email}<input type="email" name="email" autocomplete="email" maxlength="254" required aria-describedby="contact-email-error" /></label>
+    <p class="field-error" id="contact-email-error"></p>
+  </div>
+  <div>
+    <label>{t.phone}<input type="tel" name="phone" autocomplete="tel" maxlength="50" aria-describedby="contact-phone-error" /></label>
+    <p class="field-error" id="contact-phone-error"></p>
+  </div>
+  <div>
+    <label>{t.subject}<input name="subject" minlength="5" maxlength="150" required aria-describedby="contact-subject-error" /></label>
+    <p class="field-error" id="contact-subject-error"></p>
+  </div>
+  <div class="full">
+    <label>{t.replyLanguage}
+      <select name="replyLocale" aria-describedby="contact-replyLocale-error">
+        {locales.map((language) => (
+          <option value={language} lang={language} selected={language === locale}>{languageNames[language]}</option>
+        ))}
+      </select>
+    </label>
+    <p class="field-error" id="contact-replyLocale-error"></p>
+  </div>
+  <div class="full">
+    <label>{t.message}<textarea name="message" rows="5" minlength="10" maxlength="3000" required aria-describedby="contact-message-error"></textarea></label>
+    <p class="field-error" id="contact-message-error"></p>
+  </div>
   <div hidden><input name="website" tabindex="-1" autocomplete="off" /></div>
   <div class="full">
     <button type="submit" class="action">{t.send}</button>
@@ -23,13 +48,48 @@ const t = contactCopy[locale];
 </form>
 
 <script>
+  import { locales } from '../content/copy';
+  import { contactFields, validateContact, type ContactErrors, type ContactField } from '../lib/contact-validation';
+
   const form = document.querySelector<HTMLFormElement>('[data-contact]');
   const button = form?.querySelector('button');
   const status = form?.querySelector('[role="status"]');
 
   if (form && button && status) {
+    function setError(field: ContactField, message?: string) {
+      const input = form?.elements.namedItem(field);
+      const error = form?.querySelector(`#contact-${field}-error`);
+      if (!(input instanceof HTMLElement) || !error) return;
+
+      error.textContent = message ?? '';
+      if (message) input.setAttribute('aria-invalid', 'true');
+      else input.removeAttribute('aria-invalid');
+    }
+
+    function showErrors(errors: ContactErrors) {
+      for (const field of contactFields) setError(field, errors[field]);
+      form?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+    }
+
+    form.noValidate = true;
+    for (const field of contactFields) {
+      const input = form.elements.namedItem(field);
+      if (input instanceof HTMLElement) input.addEventListener('input', () => setError(field));
+    }
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
+      if (button.disabled) return;
+      const data = new FormData(form);
+      const locale = locales.find((language) => language === data.get('locale')) ?? 'en';
+      const result = validateContact(Object.fromEntries(data), locale);
+      if (!result.success) {
+        status.textContent = form.dataset.invalid ?? '';
+        showErrors(result.fieldErrors);
+        return;
+      }
+
+      showErrors({});
       button.disabled = true;
       status.textContent = form.dataset.sending ?? '';
 
@@ -37,9 +97,13 @@ const t = contactCopy[locale];
         const response = await fetch(form.action, {
           method: 'POST',
           headers: { Accept: 'application/json' },
-          body: new URLSearchParams(Array.from(new FormData(form), ([key, value]) => [key, String(value)])),
+          body: new URLSearchParams(Array.from(data, ([key, value]) => [key, String(value)])),
         });
         if (response.ok) form.reset();
+        if (response.status === 400) {
+          const body: { fieldErrors?: ContactErrors } = await response.json();
+          showErrors(body.fieldErrors ?? {});
+        }
         const key = response.ok ? 'sent' : response.status === 400 ? 'invalid' : 'failed';
         status.textContent = form.dataset[key] ?? '';
       } catch {
@@ -54,7 +118,7 @@ const t = contactCopy[locale];
 <style>
   form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
   label { display: grid; gap: .45rem; font-size: .925rem; }
-  input, textarea {
+  input, select, textarea {
     width: 100%;
     min-height: 2.75rem;
     padding: .7rem .85rem;
@@ -66,6 +130,8 @@ const t = contactCopy[locale];
     font-size: 1rem;
   }
   textarea { resize: vertical; }
+  input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: #ffab8a; }
+  .field-error:not(:empty) { margin-top: .35rem; color: #ffab8a; font-size: .875rem; }
   .full { grid-column: 1 / -1; }
   [role="status"]:not(:empty) { margin-top: .75rem; }
   button:disabled { opacity: .65; cursor: wait; }

@@ -2,20 +2,13 @@ import type { APIRoute } from 'astro';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { env } from 'cloudflare:workers';
 import { Resend } from 'resend';
-import { z } from 'zod';
 import { locales, type Locale } from '../../content/copy';
 import { contactCopy } from '../../content/contact';
+import { contactEmails } from '../../lib/contact-emails';
+import { honeypotSchema, validateContact, type ContactErrors } from '../../lib/contact-validation';
 
 export const prerender = false;
 
-const schema = z.object({
-  name: z.string().trim().min(2).max(100),
-  email: z.email().max(254),
-  phone: z.string().trim().max(50).optional(),
-  subject: z.string().trim().min(5).max(150).regex(/^[^\r\n]+$/),
-  message: z.string().trim().min(10).max(3000),
-  website: z.string().optional(),
-});
 const maxBodyBytes = 40_000;
 
 export const POST: APIRoute = async ({ request, url }) => {
@@ -23,15 +16,16 @@ export const POST: APIRoute = async ({ request, url }) => {
   const json = type === 'application/json' || request.headers.get('accept')?.includes('application/json');
   let locale: Locale = 'en';
 
-  function respond(status: number, key: 'sent' | 'invalid' | 'failed') {
+  function respond(status: number, key: 'sent' | 'invalid' | 'failed', fieldErrors?: ContactErrors) {
     const t = contactCopy[locale];
     const headers = { 'Cache-Control': 'no-store' };
 
-    if (json) return Response.json({ message: t[key] }, { status, headers });
+    if (json) return Response.json({ message: t[key], fieldErrors }, { status, headers });
 
     const back = getRelativeLocaleUrl(locale) + '#contact';
+    const errors = fieldErrors ? Object.values(fieldErrors).map((message) => `<li>${message}</li>`).join('') : '';
     return new Response(
-      `<!doctype html><html lang="${locale}"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${t[key]}</title><main><h1>${t[key]}</h1><a href="${back}">${t.back}</a></main></html>`,
+      `<!doctype html><html lang="${locale}"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${t[key]}</title><main><h1>${t[key]}</h1>${errors ? `<ul>${errors}</ul>` : ''}<a href="${back}">${t.back}</a></main></html>`,
       { status, headers: { ...headers, 'Content-Type': 'text/html; charset=utf-8' } },
     );
   }
@@ -73,23 +67,16 @@ export const POST: APIRoute = async ({ request, url }) => {
     locale = locales.find((language) => language === requestedLocale) ?? 'en';
   }
 
-  const result = schema.safeParse(input);
-  if (!result.success) return respond(400, 'invalid');
-  const { name, email, phone, subject, message, website } = result.data;
-  if (website) return respond(200, 'sent');
+  if (honeypotSchema.safeParse(input).success) return respond(200, 'sent');
 
+  const result = validateContact(input, locale);
+  if (!result.success) return respond(400, 'invalid', result.fieldErrors);
   const { RESEND_API_KEY: apiKey, CONTACT_FROM_EMAIL: from } = env;
   if (!apiKey || !from) return respond(503, 'failed');
 
   try {
-    const { error } = await new Resend(apiKey).emails.send({
-      from,
-      to: 'omarhanaficontact@gmail.com',
-      replyTo: email,
-      subject: `Portfolio enquiry: ${subject}`,
-      text: [`Name: ${name}`, `Email: ${email}`, phone && `Phone: ${phone}`, '', message]
-        .filter((line) => line !== undefined).join('\n'),
-    });
+    const emails = contactEmails(from, result.data, result.data.replyLocale ?? locale);
+    const { error } = await new Resend(apiKey).batch.send(emails, { batchValidation: 'strict' });
     return error ? respond(502, 'failed') : respond(200, 'sent');
   } catch {
     return respond(502, 'failed');
