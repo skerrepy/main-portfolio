@@ -1,0 +1,64 @@
+---
+import { getAbsoluteLocaleUrl, getRelativeLocaleUrl } from 'astro:i18n';
+import { copy, languageNames, locales, type Locale } from '../content/copy';
+import '../styles/portfolio.css';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  route?: string;
+}
+
+const { locale, title, description, route } = Astro.props;
+const t = copy[locale];
+const home = getRelativeLocaleUrl(locale);
+const canonical = getAbsoluteLocaleUrl(locale, route);
+---
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f3eee3" />
+    <title>{title}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href={canonical} />
+    {locales.map((lang) => (
+      <link rel="alternate" hreflang={lang} href={getAbsoluteLocaleUrl(lang, route)} />
+    ))}
+    <link rel="alternate" hreflang="x-default" href={getAbsoluteLocaleUrl('en', route)} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={{ en: 'en_US', fr: 'fr_BE', nl: 'nl_BE' }[locale]} />
+  </head>
+  <body id="top">
+    <a class="skip" href="#main">{t.skip}</a>
+    <div class="shell">
+      <header class="topbar">
+        <a class="wordmark" href={getRelativeLocaleUrl(locale)}>Omar Hanafi</a>
+        <nav aria-label={t.navigation}>
+          <a href={home + "#portfolio"}>{t.projects}</a>
+          <a href={home + "#experience"}>{t.experience}</a>
+          <a href={home + "#contact"}>{t.contact}</a>
+        </nav>
+        <nav class="languages" aria-label={t.languages}>
+          {locales.map((lang) => (
+            <a href={getRelativeLocaleUrl(lang, route)} lang={lang} hreflang={lang}
+              aria-label={languageNames[lang]} aria-current={locale === lang ? 'page' : undefined}>
+              {lang.toUpperCase()}
+            </a>
+          ))}
+        </nav>
+      </header>
+      <main id="main" tabindex="-1"><slot /></main>
+      <footer class="footer">
+        <span>Omar Hanafi · {t.location}</span>
+        <a href="#top">{t.back}</a>
+      </footer>
+    </div>
+  </body>
+</html>

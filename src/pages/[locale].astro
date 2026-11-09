@@ -1,0 +1,14 @@
+---
+import Portfolio from '../components/Portfolio.astro';
+import { locales } from '../content/copy';
+
+export function getStaticPaths() {
+  return locales.filter((locale) => locale !== 'en').map((locale) => ({
+    params: { locale },
+    props: { locale },
+  }));
+}
+
+const { locale } = Astro.props;
+---
+<Portfolio locale={locale} />

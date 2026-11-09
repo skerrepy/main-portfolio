@@ -1,0 +1,48 @@
+---
+import { Image } from 'astro:assets';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import PortfolioLayout from './PortfolioLayout.astro';
+import { copy, type Locale } from '../content/copy';
+import type { Project } from '../content/projects';
+
+interface Props {
+  locale: Locale;
+  project: Project;
+}
+
+const { locale, project } = Astro.props;
+const t = copy[locale];
+const route = `projects/${project.slug}`;
+const projectsUrl = getRelativeLocaleUrl(locale) + '#portfolio';
+---
+<PortfolioLayout locale={locale} title={`${project.name} | Omar Hanafi`} description={project.description[locale]} route={route}>
+  <a class="project-back" href={projectsUrl}>
+    <span aria-hidden="true">←</span> {t.allProjects}
+  </a>
+  <article class="detail">
+    <header class="detail-hero">
+      <p class="location">{t[project.category]}</p>
+      <h1>{project.name}</h1>
+      <p class="detail-intro">{project.description[locale]}</p>
+    </header>
+    <div class="detail-body" class:list={{ 'detail-body--with-image': project.image }}>
+      <div class="detail-copy">
+        <h2>{t.overview}</h2>
+        <p>{project.details[locale]}</p>
+        <h3>{t.technologies}</h3>
+        <ul class="stack">{project.stack.map((tool) => <li>{tool}</li>)}</ul>
+        <div class="project-links">
+          {project.website && <a href={project.website}>{t.site}</a>}
+          {project.source && <a href={project.source}>{t.code}</a>}
+          {project.app && <a href={project.app}>{t.app}</a>}
+        </div>
+      </div>
+      {project.image && (
+        <figure class="detail-media">
+          <Image src={project.image} alt={project.name} widths={[360, 640, 960, 1280]}
+            sizes="(max-width: 52rem) 90vw, 46vw" width={960} format="webp" />
+        </figure>
+      )}
+    </div>
+  </article>
+</PortfolioLayout>

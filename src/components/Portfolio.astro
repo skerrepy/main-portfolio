@@ -1,0 +1,92 @@
+---
+import { Image } from 'astro:assets';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import PortfolioLayout from './PortfolioLayout.astro';
+import ContactForm from './ContactForm.astro';
+import { copy, type Locale } from '../content/copy';
+import { experience } from '../content/experience';
+import { projects } from '../content/projects';
+
+interface Props { locale: Locale }
+
+const { locale } = Astro.props;
+const t = copy[locale];
+const title = `Omar Hanafi | ${t.role}`;
+const email = 'omarhanaficontact@gmail.com';
+const github = 'https://github.com/skerrepy';
+const linkedin = 'https://www.linkedin.com/in/omar-hanafi-654489100/';
+---
+<PortfolioLayout locale={locale} title={title} description={`${t.role}. ${t.location}. ${t.intro}`}>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <p class="location">{t.location}</p>
+      <h1 id="hero-title">{t.role}</h1>
+      <div class="hero-bottom">
+        <p>{t.intro}</p>
+        <a class="action" href="#portfolio">
+          {t.projects}
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2.5v10m-4-4 4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+  </section>
+  <section id="portfolio" aria-labelledby="projects-title">
+    <div class="section-heading">
+      <h2 id="projects-title">{t.projects}</h2>
+      <p>{t.projectIntro}</p>
+    </div>
+    <ol class="project-list">
+      {projects.map((project, index) => (
+        <li class="project">
+          <span class="project-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+          <article class="project-copy">
+            <p class="category">{t[project.category]}</p>
+            <h3><a href={getRelativeLocaleUrl(locale, `projects/${project.slug}`)}>{project.name}</a></h3>
+            <p>{project.description[locale]}</p>
+            <ul class="stack">{project.stack.map((tool) => <li>{tool}</li>)}</ul>
+            <div class="project-links">
+              <a href={getRelativeLocaleUrl(locale, `projects/${project.slug}`)} aria-label={`${t.details} · ${project.name}`}>{t.details}</a>
+              {project.website && <a href={project.website} aria-label={`${t.site} · ${project.name}`}>{t.site}</a>}
+              {project.source && <a href={project.source} aria-label={`${t.code} · ${project.name}`}>{t.code}</a>}
+              {project.app && <a href={project.app} aria-label={`${t.app} · ${project.name}`}>{t.app}</a>}
+            </div>
+          </article>
+          {project.image && <div class="project-media">
+            <Image class="project-image" src={project.image} alt="" widths={[360, 640, 960]}
+              sizes="(max-width: 42rem) 90vw, (max-width: 78rem) 44vw, 520px" width={640} format="webp" />
+          </div>}
+        </li>
+      ))}
+    </ol>
+  </section>
+  <section id="experience" aria-labelledby="experience-title">
+    <div class="section-heading"><h2 id="experience-title">{t.experience}</h2></div>
+    <ul class="experience-list">
+      {experience.map((item) => (
+        <li>
+          <p class="period">{item.period[locale]}</p>
+          <h3>{item.company}</h3>
+          <div>
+            <p>{item.role[locale]}</p>
+            {item.detail && <p class="muted">{item.detail[locale]}</p>}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </section>
+  <section id="contact" class="contact" aria-labelledby="contact-title">
+    <div>
+      <h2 id="contact-title">{t.contact}</h2>
+      <p>{t.contactIntro}</p>
+      <ul class="contact-links">
+        <li><a href={`mailto:${email}`}>{email}</a></li>
+        <li><a href={github}>GitHub</a></li>
+        <li><a href={linkedin}>LinkedIn</a></li>
+      </ul>
+    </div>
+    <ContactForm locale={locale} />
+  </section>
+</PortfolioLayout>

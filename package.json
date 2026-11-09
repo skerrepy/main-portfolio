@@ -2,37 +2,30 @@
   "name": "main-portfolio",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "npm run cf:types && astro check",
+    "start": "astro preview",
+    "cf:types": "wrangler types",
+    "deploy:check": "npm run build && wrangler deploy --dry-run",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
-    "@radix-ui/react-label": "^2.0.2",
-    "@radix-ui/react-slot": "^1.0.2",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "country-flag-icons": "^1.5.21",
-    "framer-motion": "^12.23.24",
-    "lucide-react": "^0.546.0",
-    "next": "16.0.0",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "react-hook-form": "^7.48.2",
-    "resend": "^3.2.0",
-    "tailwind-merge": "^3.3.1",
-    "zod": "^3.22.4",
-    "@hookform/resolvers": "^3.3.2"
+    "@astrojs/cloudflare": "^14.4.6",
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.4.7",
+    "resend": "^6.37.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.0",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@astrojs/check": "^0.9.12",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.158.0"
   }
 }

@@ -1,0 +1,73 @@
+---
+import type { Locale } from '../content/copy';
+import { contactCopy } from '../content/contact';
+
+interface Props { locale: Locale }
+
+const { locale } = Astro.props;
+const t = contactCopy[locale];
+---
+<form action="/api/contact/" method="post" data-contact data-sending={t.sending}
+  data-sent={t.sent} data-invalid={t.invalid} data-failed={t.failed}>
+  <input type="hidden" name="locale" value={locale} />
+  <label>{t.name}<input name="name" autocomplete="name" minlength="2" maxlength="100" required /></label>
+  <label>{t.email}<input type="email" name="email" autocomplete="email" maxlength="254" required /></label>
+  <label>{t.phone}<input type="tel" name="phone" autocomplete="tel" maxlength="50" /></label>
+  <label>{t.subject}<input name="subject" minlength="5" maxlength="150" required /></label>
+  <label class="full">{t.message}<textarea name="message" rows="5" minlength="10" maxlength="3000" required></textarea></label>
+  <div hidden><input name="website" tabindex="-1" autocomplete="off" /></div>
+  <div class="full">
+    <button type="submit" class="action">{t.send}</button>
+    <p role="status" aria-live="polite"></p>
+  </div>
+</form>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-contact]');
+  const button = form?.querySelector('button');
+  const status = form?.querySelector('[role="status"]');
+
+  if (form && button && status) {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      button.disabled = true;
+      status.textContent = form.dataset.sending ?? '';
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: new URLSearchParams(Array.from(new FormData(form), ([key, value]) => [key, String(value)])),
+        });
+        if (response.ok) form.reset();
+        const key = response.ok ? 'sent' : response.status === 400 ? 'invalid' : 'failed';
+        status.textContent = form.dataset[key] ?? '';
+      } catch {
+        status.textContent = form.dataset.failed ?? '';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+</script>
+
+<style>
+  form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  label { display: grid; gap: .45rem; font-size: .925rem; }
+  input, textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: .7rem .85rem;
+    border: 1px solid #777068;
+    border-radius: .75rem;
+    background: #24211e;
+    color: var(--cream);
+    font: inherit;
+    font-size: 1rem;
+  }
+  textarea { resize: vertical; }
+  .full { grid-column: 1 / -1; }
+  [role="status"]:not(:empty) { margin-top: .75rem; }
+  button:disabled { opacity: .65; cursor: wait; }
+  @media (max-width: 30rem) { form { grid-template-columns: 1fr; } }
+</style>

@@ -1,0 +1,15 @@
+---
+import ProjectDetail from '../../../components/ProjectDetail.astro';
+import { locales } from '../../../content/copy';
+import { projects } from '../../../content/projects';
+
+export function getStaticPaths() {
+  return locales.flatMap((locale) => projects.map((project) => ({
+    params: { locale: locale === 'en' ? undefined : locale, slug: project.slug },
+    props: { locale, project },
+  })));
+}
+
+const { locale, project } = Astro.props;
+---
+<ProjectDetail locale={locale} project={project} />
